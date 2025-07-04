@@ -41,6 +41,9 @@ COPY --from=builder-go /go_app_binary .
 COPY camoufox-py/requirements.txt ./camoufox-py/requirements.txt
 RUN pip install --no-cache-dir -r ./camoufox-py/requirements.txt
 
+# 在执行 camoufox fetch 前设置环境变量，使用国内镜像源加速浏览器下载
+RUN PLAYWRIGHT_DOWNLOAD_HOST=https://cdn.npmmirror.com/ camoufox fetch
+
 # 运行 camoufox fetch
 # 注意：如果 camoufox 需要在项目根目录运行，需要调整 WORKDIR 或命令路径
 RUN camoufox fetch
