@@ -7,7 +7,7 @@ WORKDIR /src
 
 # 复制 Go 项目的模块文件并下载依赖
 COPY golang/go.mod ./
-RUN go mod download
+RUN GOPROXY="https://goproxy.cn,https://mirrors.aliyun.com/goproxy/,https://gocenter.io,direct" go mod download
 
 # 复制 Go 项目的源代码
 COPY golang/ .
@@ -24,6 +24,9 @@ FROM python:3.11-slim
 # 设置主工作目录
 WORKDIR /app
 
+# apt 源
+RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources
+
 # 安装 Supervisor 和你的 Python 依赖
 # 将 supervisor 添加到 apt-get install 列表中
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -39,10 +42,11 @@ COPY --from=builder-go /go_app_binary .
 
 # 复制 Python 项目的 requirements.txt 并安装依赖
 COPY camoufox-py/requirements.txt ./camoufox-py/requirements.txt
-RUN pip install --no-cache-dir -r ./camoufox-py/requirements.txt
+RUN pip install --no-cache-dir -r ./camoufox-py/requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 
 # 在执行 camoufox fetch 前设置环境变量，使用国内镜像源加速浏览器下载
-RUN PLAYWRIGHT_DOWNLOAD_HOST=https://cdn.npmmirror.com/ camoufox fetch
+RUN PLAYWRIGHT_DOWNLOAD_HOST=https://cdn.npmmirror.com/ \
+    camoufox fetch
 
 # 运行 camoufox fetch
 # 注意：如果 camoufox 需要在项目根目录运行，需要调整 WORKDIR 或命令路径
